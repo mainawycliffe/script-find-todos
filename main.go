@@ -118,7 +118,10 @@ func findCommentBlockCloser(content []byte) (bool, error) {
 	return hasCommentBlockCloser, nil
 }
 
-// hasTodo finds whether content passed contains a todo
+// hasTodo use regex to check if a line has a todo. Preferably at the beginning
+// of the line instead of anywhere with the comment.
+// Example: Correct: // TODO make sure this works as explained above ✔✔✔
+// Example: Incorrect: // hasTodo use regex to check if a line has a todo. 👎👎👎
 func hasTodo(content []byte) (bool, error) {
 	findTodo, err := regexp.Match(`(?i)todo.*`, content)
 	if err != nil {
@@ -127,7 +130,9 @@ func hasTodo(content []byte) (bool, error) {
 	return findTodo, nil
 }
 
-// getLineCommitAuthor determine the user who left the todo by using git blame
+// getLineCommitAuthor determine the author of the commit that left the todo by
+// using git blame. This is not perfect, as if the todo was updated, it would
+// lead to that author though.
 func getLineCommitAuthor(filePath string, lineNumber int) (string, error) {
 	// git blame
 	cmd := fmt.Sprintf("git blame -L %d,%d %s", lineNumber, lineNumber, filePath)
