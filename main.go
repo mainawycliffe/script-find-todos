@@ -15,12 +15,13 @@ func main() {
 	if len(os.Args) > 1 {
 		listPath = os.Args[1]
 	}
+	// remove all hidden dirs and files
 	filterFiles := regexp.MustCompile(`^\..*|/\.`)
 	files := script.FindFiles(listPath).RejectRegexp(filterFiles)
 	content := files.EachLine(func(filePath string, builderFile *strings.Builder) {
 		p := script.File(filePath)
 		lineNumber := 1
-		// keep track of comments0
+		// keep track of comments
 		isInsideACommentBlock := false // track for multiline comments
 		p.EachLine(func(str string, build *strings.Builder) {
 			if isInsideACommentBlock {
