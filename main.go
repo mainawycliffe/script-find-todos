@@ -34,7 +34,10 @@ func main() {
 					log.Fatal(err)
 				}
 				if findTodo {
-					username := getLineCommitAuthor(filePath, lineNumber)
+					username, err := getLineCommitAuthor(filePath, lineNumber)
+					if err != nil {
+						log.Fatal(err)
+					}
 					builderFile.WriteString(fmt.Sprintf("%s:%d (%s) %s \n", filePath, lineNumber, username, strings.TrimSpace(str)))
 				}
 				// probably check for text before closer and append it to be part of todo
@@ -64,7 +67,10 @@ func main() {
 				log.Fatal(err)
 			}
 			if findTodo {
-				username := getLineCommitAuthor(filePath, lineNumber)
+				username, err := getLineCommitAuthor(filePath, lineNumber)
+				if err != nil {
+					log.Fatal(err)
+				}
 				builderFile.WriteString(fmt.Sprintf("%s:%d (%s) %s \n", filePath, lineNumber, username, strings.TrimSpace(str)))
 			}
 			lineNumber++
@@ -121,27 +127,27 @@ func hasTodo(content []byte) (bool, error) {
 }
 
 // getLineCommitAuthor determine the user who left the todo by using git blame
-func getLineCommitAuthor(filePath string, lineNumber int) string {
+func getLineCommitAuthor(filePath string, lineNumber int) (string, error) {
 	// git blame
 	cmd := fmt.Sprintf("git blame -L %d,%d %s", lineNumber, lineNumber, filePath)
 	execGitBlame := script.Exec(cmd)
 	if execGitBlame.Error() != nil {
-		log.Fatal(execGitBlame.Error())
+		return "", fmt.Errorf(`Error executing "git blame -L %d,%d %s": %w`, lineNumber, lineNumber, filePath, execGitBlame.Error())
 	}
 	gitBlameOutput, err := execGitBlame.String()
 	if err != nil {
-		log.Fatal(err)
+		return "", fmt.Errorf(`Error converting "git blame" output to string: %w`, execGitBlame.Error())
 	}
 	content := strings.Split(gitBlameOutput, " ")
 	commit := strings.Replace(content[0], "^", "", 1)
 	cmd = fmt.Sprintf("git show -s --format='%an' %s", commit)
 	execGitShowLog := script.Exec(cmd)
 	if execGitShowLog.Error() != nil {
-		log.Fatal(execGitBlame.Error())
+		return "", fmt.Errorf(`Error executing "git show -s --format='%an' %s": %w`, commit, execGitShowLog.Error())
 	}
 	author, err := execGitShowLog.String()
 	if err != nil {
-		log.Fatal(err)
+		return "", fmt.Errorf(`Error converting "git show" output to string: %w`, execGitBlame.Error())
 	}
-	return fmt.Sprintf("%s", author)
+	return fmt.Sprintf("%s", author), nil
 }
