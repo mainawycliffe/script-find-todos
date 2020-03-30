@@ -146,14 +146,14 @@ func getLineCommitAuthor(filePath string, lineNumber int) (string, error) {
 	}
 	content := strings.Split(gitBlameOutput, " ")
 	commit := strings.Replace(content[0], "^", "", 1)
-	cmd = fmt.Sprintf("git show -s --format='%an' %s", commit)
+	cmd = fmt.Sprintf("git show -s --format='%s' %s", "%an", commit)
 	execGitShowLog := script.Exec(cmd)
 	if execGitShowLog.Error() != nil {
-		return "", fmt.Errorf(`Error executing "git show -s --format='%an' %s": %w`, commit, execGitShowLog.Error())
+		return "", fmt.Errorf(`Error executing "git show -s --format='%s' %s": %w`, "%an", commit, execGitShowLog.Error())
 	}
 	author, err := execGitShowLog.String()
 	if err != nil {
 		return "", fmt.Errorf(`Error converting "git show" output to string: %w`, execGitBlame.Error())
 	}
-	return fmt.Sprintf("%s", author), nil
+	return author, nil
 }
